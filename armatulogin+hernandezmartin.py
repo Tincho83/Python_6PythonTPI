@@ -9,10 +9,12 @@ Original file is located at
 
 # -*- coding: utf-8 -*-
 """
-TP I de Python para CoderHouse, creado 09/09/2025 09:21:32
-
-@author: Martin Hernandez
-
+***************************************************************
+* TP I de Python para CoderHouse, creado 09/09/2025 09:21:32  *
+*                                                             *
+* @author: Martin Hernandez                                   *
+* Ultima Modificacion: 12/09/2025                             *
+***************************************************************
 
 """
 
@@ -27,11 +29,14 @@ def registrar_usuario(db_usuario):
         #Ingreso de Nombre de Usuario. ELiminamos los espacios en blanco al inicio y final del texto ingresado.
         usuario = input("Ingrese Nombre de Usuario: ").strip()
 
+        # Normalizamos el usuario a minusculas para comparar
+        usuario_normalizado = usuario.lower()
+
         # Comprobar longitud de usuario ingresado
-        tamano_usuario = len(usuario)
+        tamano_usuario = len(usuario_normalizado)
 
         # Si usuario ingresado es vacio volvemos al inicio del bucle, para que ingrese los datos correctamentr
-        if not usuario:
+        if not usuario_normalizado:
             print(">Error: El nombre de usuario no puede estar vacio.\n")
             continue
 
@@ -40,9 +45,18 @@ def registrar_usuario(db_usuario):
             print(">Error: Debe ingresar un Nombre de Usuario de hasta 25 caracteres.\n")
             continue
         else:
+
             # Validamos que si el usuario ingresdo ya existe en la DB, volvemos al inicio del bucle, para que ingrese otros datos correctamentr
-            if usuario in db_usuario:
+            if usuario_normalizado in db_usuario:
                 print(">Error: No es posible el registro. El usuario ya existe.\n")
+                continue
+
+            # Validamos si contiene numeros, debe tener al menos una letra
+            contiene_letra = any(c.isalpha() for c in usuario_normalizado)
+            contiene_numero = any(c.isdigit() for c in usuario_normalizado)
+
+            if contiene_numero and not contiene_letra:
+                print(">Error: El nombre de usuario no puede ser solo numeros. Debe contener al menos una letra.\n")
                 continue
 
             #Ingreso de Contraseña. ELiminamos los espacios en blanco al inicio y final del texto ingresado.
@@ -53,7 +67,7 @@ def registrar_usuario(db_usuario):
 
             # Si contrasena es vacio volvemos al inicio del bucle, para que ingrese los datos correctamentr
             if not contrasena:
-                print(">Error: La contraseña no puede estar vacía.\n")
+                print(">Error: La contraseña no puede estar vacia.\n")
                 continue
 
             # Validamos que el contraseña ingresada no supere los 25 caracteres si no  volvemos al inicio del bucle, para que ingrese los datos correctamentr
@@ -62,9 +76,9 @@ def registrar_usuario(db_usuario):
                 continue
 
             # Guardar usuario y contraseña
-            db_usuario[usuario] = contrasena
+            db_usuario[usuario_normalizado] = contrasena
             # Notificamos por pantalla
-            print(f"*** El Usuario '{usuario}' se registro correctamente.\n\n")
+            print(f"*** El Usuario '{usuario_normalizado}' se registro correctamente.\n\n")
 
         #Salimos del bucle while
         break
@@ -85,6 +99,7 @@ def listar_usuarios(db_usuario):
 ├─────────────────────────────┤""")
 
         # Recorremos los usuarios en la BD
+        contador_filas = len(db_usuario)
         for usuario in db_usuario:
 
             # Realizamos calculos para armar el cierre de fila de la tabla
@@ -92,8 +107,13 @@ def listar_usuarios(db_usuario):
             espacios_linea_columna_usuario_tabla = 31 - 3 - tamano_usuario
             cadena_espacios_linea_columna_usuario_tabla = " " * espacios_linea_columna_usuario_tabla
 
-            print(f"│ {usuario}{cadena_espacios_linea_columna_usuario_tabla}│")
-            print("└─────────────────────────────┘\n\n")
+            if contador_filas > 1:
+                print(f"│ {usuario}{cadena_espacios_linea_columna_usuario_tabla}│")
+                print("├-----------------------------┤")
+                contador_filas -= 1
+            else:
+                print(f"│ {usuario}{cadena_espacios_linea_columna_usuario_tabla}│")
+        print("└─────────────────────────────┘\n\n")
 
 
 # Funcion para listar Usuarios con contraseña (Solo modo prueba)
@@ -111,6 +131,7 @@ def listar_usuarios_contrasenas(db_usuario):
 ├─────────────────────────────┼──────────────────────────┤""")
 
         # Recorremos los usuarios en la BD
+        contador_filas = len(db_usuario)
         for usuario, contrasena in db_usuario.items():
 
              # Realizamos calculos para armar el cierre de fila de la tabla
@@ -122,12 +143,17 @@ def listar_usuarios_contrasenas(db_usuario):
             espacios_linea_columna_contrasena_tabla = 31 - 6 - tamano_contrasena
             cadena_espacios_linea_columna_contrasena_tabla = " " * espacios_linea_columna_contrasena_tabla
 
-            print(f"│ {usuario}{cadena_espacios_linea_columna_usuario_tabla}│ {contrasena}{cadena_espacios_linea_columna_contrasena_tabla}│")
-            print("└─────────────────────────────┴──────────────────────────┘\n\n")
+            if contador_filas > 1:
+                print(f"│ {usuario}{cadena_espacios_linea_columna_usuario_tabla}│ {contrasena}{cadena_espacios_linea_columna_contrasena_tabla}│")
+                print("├-----------------------------┼--------------------------┤")
+                contador_filas -= 1
+            else:
+                print(f"│ {usuario}{cadena_espacios_linea_columna_usuario_tabla}│ {contrasena}{cadena_espacios_linea_columna_contrasena_tabla}│")
+        print("└─────────────────────────────┴──────────────────────────┘\n\n")
 
-
+# Funcion para inicio de sesion.
 def inicio_sesion(db_usuario):
-    """Inicio de sesion de usuario y contraseña. Hasta 3 intentos"""
+    """Inicio de sesion de usuario y contraseña. Hasta 3 intentos. Solo Contraseña Key Sensitive."""
 
     #Comprobamos si existe al menos un usuario registrado en la BD
     if not db_usuario:
@@ -137,14 +163,22 @@ def inicio_sesion(db_usuario):
 
         intentos_iniciosesion = 0
         usuario_sesioniniciada = False
+
         while intentos_iniciosesion < 3:
             usuario = input("Ingrese nombre de usuario: ").strip()
             contrasena = input("Ingrese contraseña: ").strip()
 
-            #Comprobar si el usuario y la contraseña coinciden.
-            if usuario in db_usuario and db_usuario[usuario] == contrasena:
+            # Normalizamos el usuario a minusculas para comparar
+            usuario_normalizado = usuario.lower()
+
+            #Buscar y comprobar si el usuario (No case sentisite) y la contraseña (Si case sentisite) coinciden.
+            if usuario_normalizado in db_usuario and db_usuario[usuario_normalizado] == contrasena:
+
                 usuario_sesioniniciada = True
-                print(f"Bienvenido, {usuario}!\n\n")
+                print(f"*** Sesion iniciada de {usuario.capitalize()}.\n")
+
+                # llamada a la funcion de bienvenida
+                bienvenida(db_usuario, usuario)
                 break
             else:
                 intentos_iniciosesion += 1
@@ -155,27 +189,117 @@ def inicio_sesion(db_usuario):
             print(f"Demasiados intentos incorrectos de Inicio de sesion. Intentos fallidos: {intentos_iniciosesion}.\n")
 
 
+# Funcion para mostrar el banner de bienvenida
+def bienvenida(db_usuario, usuario):
+    """Muestra el banner de bienvenida despues de iniciar sesion."""
+    tamano_usuario = len(usuario)
+    espacios_linea_mensaje_bienvenida = 29 - tamano_usuario
+    cadena_espacios_linea_mensaje_bienvenida = " " * espacios_linea_mensaje_bienvenida
+
+    print("***********************************************")
+    print(f"*   Bienvenido, {usuario.capitalize()}!{cadena_espacios_linea_mensaje_bienvenida}*")
+    print("***********************************************\n\n")
+
+    menu_usuario(db_usuario, usuario)
+
+def cambiar_contrasena(db_usuario, usuario):
+    """Permite a un usuario cambiar su contraseña."""
+
+    contrasena_actual = input("Ingrese su contraseña actual: ").strip()
+
+    # usuario en minusculas
+    usuario_normalizado = usuario.lower()
+
+    if db_usuario[usuario_normalizado] != contrasena_actual:
+        print("Contraseña incorrecta. No se puede cambiar.")
+        return
+
+    contrasena_nueva = input("Ingrese la nueva contraseña: ").strip()
+
+    db_usuario[usuario_normalizado] = contrasena_nueva
+
+    print("Contraseña cambiada con éxito.")
+
+
+def menu():
+    """Menu principal del programa."""
+
+    while True:
+        print("\n*** MENU PRINCIPAL ***")
+        print("1. Registrar usuario")
+        print("2. Inicio de sesion")
+        print("3. Listar usuarios")
+        print("4. Listar usuarios con contraseña (Solo para Prueba)")
+        print("5. Salir\n")
+
+        opcion = input("Seleccione una opcion: ").strip()
+
+        if opcion == "1":
+            registrar_usuario(credenciales_db)
+        elif opcion == "2":
+            inicio_sesion(credenciales_db)
+        elif opcion == "3":
+            listar_usuarios(credenciales_db)
+        elif opcion == "4":
+            listar_usuarios_contrasenas(credenciales_db)
+        elif opcion == "5":
+            print("Saliendo del programa...")
+            break
+        else:
+            print("Opcion no valida. Intente de nuevo.")
+
+
+def menu_usuario(db_usuario, usuario):
+    """Menu para usuarios."""
+    while True:
+        print(f"\n*** MENU USUARIO ({usuario.capitalize()}) ***")
+        print("1. Ver mi informacion")
+        print("2. Cambiar contraseña")
+        print("3. Cerrar sesion")
+        print("4. Salir")
+
+        opcion = input("Seleccione una opcion: ").strip()
+
+        if opcion == "1":
+            print(f"Usuario: {usuario}")
+        elif opcion == "2":
+            cambiar_contrasena(db_usuario, usuario)
+        elif opcion == "3":
+            print("Cerrando sesión de usuario...")
+            break
+        elif opcion == "4":
+            print("Saliendo del programa...")
+            exit()
+        else:
+            print("Opción no válida. Intente de nuevo.")
+
+
 
 #Informacion del TP I
 print(__doc__)
 
 # Llamada a la funcion para Registro de Usuario.
-registrar_usuario(credenciales_db)
+#registrar_usuario(credenciales_db)
 
 # Llamada a la funcion para listar Usuario/s.
-listar_usuarios(credenciales_db)
+#listar_usuarios(credenciales_db)
 
 # Llamada a la funcion para listar Usuario/s y contraseñas (Solo prueba).
-listar_usuarios_contrasenas(credenciales_db)
+#listar_usuarios_contrasenas(credenciales_db)
 
 # Llamada a la funcion para Iniciar sesion de Usuario.
-inicio_sesion(credenciales_db)
+#inicio_sesion(credenciales_db)
+
+# Ejecutar programa
+menu()
 
 
 
 #Recursos:
 # https://www.asciitable.com/
 # ASCII: ┌ ┘─ ├ ┬ ┴ └ ┐ ┤ │ ┼
+
+#python .\C6_TPI\PrimeraPreEntrega+Hernandez.py
 
 #TP I
 #Consignas:
@@ -207,4 +331,5 @@ inicio_sesion(credenciales_db)
 #[x] Para guiarte, te compartimos un video explicativo:
 #
 # https://colab.research.google.com/drive/1N7u5ifNhg5vVSajrBbQMM9-0SsLMIagv?usp=sharing
+# https://github.com/Tincho83/Python_6PythonTPI
 
